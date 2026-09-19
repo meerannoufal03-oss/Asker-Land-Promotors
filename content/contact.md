@@ -6,7 +6,7 @@ Get in touch with Asker Land Promotors.
 
 ### Phone
 
-[+91 8675002200] (tel:+918675002200)
+[+91 8675002200](tel:+918675002200)
 
 ### WhatsApp
 
