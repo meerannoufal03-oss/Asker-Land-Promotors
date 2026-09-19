@@ -6,15 +6,15 @@ Get in touch with Asker Land Promotors.
 
 ### Phone
 
-+91 8675002200
+[+91 8675002200] (tel:+918675002200)
 
 ### WhatsApp
 
-Chat with us on WhatsApp for property enquiries.
+[+91 8675002200](https://wa.me/918675002200)
 
 ### Email
 
-askermobilesudangudi@gmail.com
+[askermobilesudangudi@gmail.com](mailto:askermobilesudangudi@gmail.com)
 
 ### Location
 
