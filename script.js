@@ -1,1023 +1,424 @@
 /* =========================================================
    ASKER LAND PROMOTORS
-   MAIN WEBSITE CSS
+   MARKDOWN CONTENT LOADER + WEBSITE FUNCTIONS
 ========================================================= */
 
 
 /* =========================================================
-   RESET
+   MARKDOWN TO HTML
+   Simple Markdown Parser
 ========================================================= */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+function markdownToHTML(markdown) {
 
-html {
-    scroll-behavior: smooth;
-}
+    let lines = markdown
+        .replace(/\r/g, "")
+        .split("\n");
 
-body {
-    font-family: "Montserrat", sans-serif;
-    background: #ffffff;
-    color: #202830;
-    line-height: 1.6;
-    overflow-x: hidden;
-}
+    let html = "";
+    let inList = false;
 
-a {
-    text-decoration: none;
-    color: inherit;
-}
+    lines.forEach(function (line) {
 
-img {
-    display: block;
-    max-width: 100%;
-}
+        line = line.trim();
 
-button {
-    font-family: inherit;
+        /* Empty line */
+        if (line === "") {
+
+            if (inList) {
+                html += "</ul>";
+                inList = false;
+            }
+
+            return;
+        }
+
+
+        /* Heading 1 */
+        if (line.startsWith("# ")) {
+
+            if (inList) {
+                html += "</ul>";
+                inList = false;
+            }
+
+            html += "<h1>" + formatInline(line.substring(2)) + "</h1>";
+
+            return;
+        }
+
+
+        /* Heading 2 */
+        if (line.startsWith("## ")) {
+
+            if (inList) {
+                html += "</ul>";
+                inList = false;
+            }
+
+            html += "<h2>" + formatInline(line.substring(3)) + "</h2>";
+
+            return;
+        }
+
+
+        /* Heading 3 */
+        if (line.startsWith("### ")) {
+
+            if (inList) {
+                html += "</ul>";
+                inList = false;
+            }
+
+            html += "<h3>" + formatInline(line.substring(4)) + "</h3>";
+
+            return;
+        }
+
+
+        /* Bullet List */
+        if (line.startsWith("- ")) {
+
+            if (!inList) {
+                html += "<ul>";
+                inList = true;
+            }
+
+            html += "<li>" + formatInline(line.substring(2)) + "</li>";
+
+            return;
+        }
+
+
+        /* Normal Paragraph */
+        if (inList) {
+            html += "</ul>";
+            inList = false;
+        }
+
+        html += "<p>" + formatInline(line) + "</p>";
+
+    });
+
+
+    /* Close remaining list */
+
+    if (inList) {
+        html += "</ul>";
+    }
+
+
+    return html;
 }
 
 
 /* =========================================================
-   COMMON
+   INLINE MARKDOWN
 ========================================================= */
 
-.container {
-    width: 90%;
-    max-width: 1180px;
-    margin: 0 auto;
-}
+function formatInline(text) {
 
-.section {
-    padding: 95px 0;
-}
+    /* Bold */
 
-.content-loading {
-    text-align: center;
-    color: #888888;
-    font-size: 14px;
+    text = text.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+
+    /* Italic */
+
+    text = text.replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+    );
+
+
+    /* Links */
+
+    text = text.replace(
+        /\[(.*?)\]\((.*?)\)/g,
+        '<a href="$2">$1</a>'
+    );
+
+
+    /* Line Break */
+
+    text = text.replace(
+        /<br\s*\/?>/gi,
+        "<br>"
+    );
+
+
+    return text;
 }
 
 
 /* =========================================================
-   HEADER
+   LOAD MARKDOWN FILE
 ========================================================= */
 
-.header {
-    position: absolute;
-    top: 0;
-    left: 0;
+async function loadMarkdown(file, elementId) {
 
-    width: 100%;
+    const element = document.getElementById(elementId);
 
-    z-index: 1000;
-}
+    if (!element) {
+        return;
+    }
 
-.navbar {
-    width: 90%;
-    max-width: 1250px;
+    try {
 
-    min-height: 90px;
+        const response = await fetch(file);
 
-    margin: 0 auto;
+        if (!response.ok) {
+            throw new Error("Unable to load " + file);
+        }
 
-    display: flex;
-    align-items: center;
+        const markdown = await response.text();
 
-    gap: 30px;
+        element.innerHTML = markdownToHTML(markdown);
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        element.innerHTML =
+            "<p>Content could not be loaded.</p>";
+
+    }
 }
 
 
 /* =========================================================
-   LOGO
+   LOAD ALL CONTENT
 ========================================================= */
 
-.logo {
-    display: flex;
-    align-items: center;
+async function loadAllContent() {
 
-    flex-shrink: 0;
-}
+    await Promise.all([
 
-.logo img {
-    width: 145px;
-    height: auto;
-
-    object-fit: contain;
-}
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-.nav-menu {
-    list-style: none;
-
-    margin-left: auto;
-
-    display: flex;
-    align-items: center;
-
-    gap: 32px;
-}
-
-.nav-menu a {
-    position: relative;
-
-    color: #ffffff;
-
-    font-size: 13px;
-    font-weight: 600;
-
-    transition: 0.3s ease;
-}
-
-.nav-menu a::after {
-    content: "";
-
-    position: absolute;
-
-    left: 0;
-    bottom: -7px;
-
-    width: 0;
-    height: 2px;
-
-    background: #ffffff;
-
-    transition: 0.3s ease;
-}
-
-.nav-menu a:hover::after {
-    width: 100%;
-}
-
-
-/* =========================================================
-   NAVBAR WHATSAPP
-========================================================= */
-
-.nav-whatsapp {
-    display: inline-flex;
-
-    align-items: center;
-    justify-content: center;
-
-    min-width: 120px;
-
-    padding: 11px 20px;
-
-    border-radius: 30px;
-
-    background: #ffffff;
-    color: #202830;
-
-    font-size: 12px;
-    font-weight: 700;
-
-    transition: 0.3s ease;
-}
-
-.nav-whatsapp:hover {
-    transform: translateY(-2px);
-}
-
-
-/* =========================================================
-   MOBILE MENU BUTTON
-========================================================= */
-
-.menu-toggle {
-    display: none;
-
-    border: none;
-    background: transparent;
-
-    color: #ffffff;
-
-    font-size: 29px;
-
-    cursor: pointer;
-}
-
-
-/* =========================================================
-   HERO
-========================================================= */
-
-.hero {
-    position: relative;
-
-    min-height: 720px;
-
-    display: flex;
-    align-items: center;
-
-    background-image: url("images/hero.png.jpeg");
-
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-
-    overflow: hidden;
-}
-
-
-/* Hero Overlay */
-
-.hero-overlay {
-    position: absolute;
-
-    inset: 0;
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(15, 25, 34, 0.90) 0%,
-            rgba(15, 25, 34, 0.72) 45%,
-            rgba(15, 25, 34, 0.30) 100%
-        );
-}
-
-
-/* Hero Content */
-
-.hero-content {
-    position: relative;
-
-    z-index: 2;
-
-    width: 90%;
-    max-width: 1180px;
-
-    margin: 0 auto;
-
-    padding-top: 65px;
-}
-
-
-/* =========================================================
-   COMMON MARKDOWN CONTENT SPACING
-========================================================= */
-
-.about,
-.services,
-.why-us,
-.contact {
-    padding-top: 90px;
-    padding-bottom: 90px;
-}
-
-
-/* Main Section Heading */
-
-.about h1,
-.services h1,
-.why-us h1,
-.contact h1 {
-    margin-top: 0;
-    margin-bottom: 32px;
-
-    color: #202830;
-
-    font-size: clamp(30px, 4vw, 45px);
-
-    line-height: 1.25;
-    font-weight: 800;
-}
-
-
-/* Sub Headings */
-
-.about h2,
-.services h2,
-.why-us h2,
-.contact h2 {
-    margin-top: 38px;
-    margin-bottom: 14px;
-
-    color: #202830;
-
-    font-size: 24px;
-    line-height: 1.35;
-}
-
-
-/* Paragraph */
-
-.about p,
-.services p,
-.why-us p,
-.contact p {
-    margin-top: 0;
-    margin-bottom: 22px;
-
-    color: #626b73;
-
-    font-size: 16px;
-
-    line-height: 1.9;
-}
-
-
-/* =========================================================
-   ABOUT
-========================================================= */
-
-.about {
-    background: #ffffff;
-}
-
-.about-content {
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-
-/* =========================================================
-   SERVICES
-========================================================= */
-
-.services {
-    background: #f6f7f8;
-}
-
-.services-content {
-    max-width: 1180px;
-    margin: 0 auto;
-}
-
-
-/* Service List */
-
-.services ul {
-    list-style: none;
-
-    margin: 35px 0 0;
-    padding: 0;
-
-    display: grid;
-
-    grid-template-columns: repeat(2, 1fr);
-
-    gap: 24px;
-}
-
-.services li {
-    padding: 30px;
-
-    background: #ffffff;
-
-    border: 1px solid #e8eaec;
-
-    border-radius: 10px;
-
-    color: #555f67;
-
-    line-height: 1.8;
-
-    transition: 0.3s ease;
-}
-
-.services li:hover {
-    transform: translateY(-5px);
-
-    box-shadow:
-        0 12px 30px rgba(0, 0, 0, 0.07);
-}
-
-
-/* =========================================================
-   WHY US
-========================================================= */
-
-.why-us {
-    background: #ffffff;
-}
-
-.why-us ul {
-    list-style: none;
-
-    margin: 35px 0 0;
-    padding: 0;
-
-    display: grid;
-
-    grid-template-columns: repeat(2, 1fr);
-
-    gap: 24px;
-}
-
-.why-us li {
-    padding: 30px;
-
-    border-top: 3px solid #202830;
-
-    background: #f8f8f8;
-
-    color: #626b73;
-
-    line-height: 1.8;
-}
-
-
-/* =========================================================
-   CONTACT
-========================================================= */
-
-.contact {
-    background: #f8f9fa;
-}
-
-.contact h3 {
-    margin-top: 32px;
-    margin-bottom: 10px;
-
-    color: #202830;
-
-    font-size: 22px;
-}
-
-.contact a {
-    color: #202830;
-
-    text-decoration: none;
-
-    transition: 0.3s ease;
-}
-
-.contact a:hover {
-    text-decoration: underline;
-}
-
-
-
-/* =========================================================
-   CTA
-========================================================= */
-
-.cta {
-    padding: 85px 0;
-
-    background: #202830;
-
-    text-align: center;
-}
-
-.cta h1,
-.cta h2 {
-    margin-bottom: 15px;
-
-    color: #ffffff;
-
-    font-size: clamp(30px, 4vw, 45px);
-
-    line-height: 1.2;
-}
-
-.cta p {
-    margin-bottom: 25px;
-
-    color: rgba(255, 255, 255, 0.72);
-
-    font-size: 14px;
-}
-
-
-/* =========================================================
-   CONTACT
-========================================================= */
-
-.contact {
-    background: #f6f7f8;
-}
-
-.contact > .container > div {
-    max-width: 1180px;
-
-    margin: 0 auto;
-}
-
-
-/* Contact paragraphs */
-
-.contact p {
-    margin-bottom: 10px;
-}
-
-
-/* Contact links */
-
-.contact a {
-    color: #202830;
-
-    font-weight: 600;
-
-    transition: 0.3s ease;
-}
-
-.contact a:hover {
-    opacity: 0.65;
-}
-
-
-/* =========================================================
-   FOOTER
-========================================================= */
-
-.footer {
-    position: relative;
-
-    overflow: hidden;
-
-    background: #17212b;
-
-    color: #ffffff;
-}
-
-
-/* Footer Background */
-
-.footer-image {
-    position: absolute;
-
-    inset: 0;
-
-    background-image:
-        linear-gradient(
-            rgba(23, 33, 43, 0.92),
-            rgba(23, 33, 43, 0.96)
+        loadMarkdown(
+            "content/home.md",
+            "home-content"
         ),
-        url("images/footer.jpg");
 
-    background-size: cover;
+        loadMarkdown(
+            "content/about.md",
+            "about-content"
+        ),
 
-    background-position: center;
+        loadMarkdown(
+            "content/services.md",
+            "services-content"
+        ),
 
-    background-repeat: no-repeat;
-}
+        loadMarkdown(
+            "content/why-us.md",
+            "why-us-content"
+        ),
 
+        loadMarkdown(
+            "content/contact.md",
+            "contact-content"
+        )
 
-/* Footer Content */
+    ]);
 
-.footer-content {
-    position: relative;
-
-    z-index: 2;
-}
-
-.footer-container {
-    width: 90%;
-    max-width: 1180px;
-
-    margin: 0 auto;
-
-    padding: 70px 0 50px;
-
-    display: grid;
-
-    grid-template-columns: 2fr 1fr 1fr;
-
-    gap: 60px;
 }
 
 
 /* =========================================================
-   FOOTER ABOUT
+   MOBILE MENU
 ========================================================= */
 
-.footer-logo {
-    display: inline-block;
+function setupMobileMenu() {
 
-    margin-bottom: 18px;
-}
+    const menuToggle =
+        document.querySelector(".menu-toggle");
 
-.footer-logo img {
-    width: 150px;
-}
+    const navMenu =
+        document.querySelector(".nav-menu");
 
-.footer-about p {
-    max-width: 380px;
-
-    color: rgba(255, 255, 255, 0.65);
-
-    font-size: 13px;
-
-    line-height: 1.8;
-}
+    const navLinks =
+        document.querySelectorAll(".nav-menu a");
 
 
-/* =========================================================
-   FOOTER LINKS
-========================================================= */
-
-.footer-links,
-.footer-social {
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: flex-start;
-
-    gap: 10px;
-}
-
-.footer-links h3,
-.footer-social h3 {
-    margin-bottom: 12px;
-
-    color: #ffffff;
-
-    font-size: 15px;
-}
-
-.footer-links a,
-.footer-social a {
-    color: rgba(255, 255, 255, 0.65);
-
-    font-size: 13px;
-
-    transition: 0.3s ease;
-}
-
-.footer-links a:hover,
-.footer-social a:hover {
-    color: #ffffff;
-
-    transform: translateX(3px);
-}
-
-
-/* =========================================================
-   FOOTER BOTTOM
-========================================================= */
-
-.footer-bottom {
-    width: 90%;
-    max-width: 1180px;
-
-    margin: 0 auto;
-
-    padding: 20px 0;
-
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-
-    text-align: center;
-}
-
-.footer-bottom p {
-    color: rgba(255, 255, 255, 0.5);
-
-    font-size: 11px;
-}
-
-
-/* =========================================================
-   TABLET
-========================================================= */
-
-@media (max-width: 1000px) {
-
-    .nav-menu {
-        gap: 20px;
+    if (!menuToggle || !navMenu) {
+        return;
     }
 
-    .nav-menu a {
-        font-size: 12px;
-    }
 
-    .services ul,
-    .why-us ul {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    /* Open / Close Menu */
 
-    .footer-container {
-        grid-template-columns: 1.5fr 1fr 1fr;
+    menuToggle.addEventListener("click", function () {
 
-        gap: 35px;
+        navMenu.classList.toggle("active");
+
+    });
+
+
+    /* Close after clicking a link */
+
+    navLinks.forEach(function (link) {
+
+        link.addEventListener("click", function () {
+
+            navMenu.classList.remove("active");
+
+        });
+
+    });
+
+
+    /* Close when clicking outside */
+
+    document.addEventListener("click", function (event) {
+
+        const clickedInsideMenu =
+            navMenu.contains(event.target);
+
+        const clickedButton =
+            menuToggle.contains(event.target);
+
+
+        if (!clickedInsideMenu && !clickedButton) {
+
+            navMenu.classList.remove("active");
+
+        }
+
+    });
+
+
+    /* Close menu when screen becomes desktop */
+
+    window.addEventListener("resize", function () {
+
+        if (window.innerWidth > 768) {
+
+            navMenu.classList.remove("active");
+
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   CURRENT YEAR
+========================================================= */
+
+function setCurrentYear() {
+
+    const yearElement =
+        document.getElementById("current-year");
+
+    if (yearElement) {
+
+        yearElement.textContent =
+            new Date().getFullYear();
+
     }
 
 }
 
 
 /* =========================================================
-   MOBILE
+   CONTACT / WHATSAPP SETTINGS
 ========================================================= */
 
-@media (max-width: 768px) {
+/*
+   IMPORTANT:
+   Later actual company number and social media
+   links can be added here.
+*/
 
-    .navbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        padding: 12px 20px;
-    }
+const companyDetails = {
 
-    .logo {
-        display: flex;
-        align-items: center;
-    }
+    whatsapp:
+        "https://wa.me/918675002200",
 
-    .logo img {
-        width: 120px;
-        height: auto;
-        display: block;
-    }
+    instagram:
+        "https://www.instagram.com/asker_land_promotors",
 
-    /* MENU TOGGLE - TOP RIGHT */
-    .menu-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    facebook:
+        "https://www.facebook.com/AskerMobilesUdangudi",
 
-        margin-left: auto;
+};
 
-        width: 48px;
-        height: 48px;
 
-        background: transparent;
-        border: none;
+/* =========================================================
+   SET SOCIAL LINKS
+========================================================= */
 
-        color: #ffffff;
-        font-size: 34px;
-        line-height: 1;
+function setupSocialLinks() {
 
-        cursor: pointer;
+    const instagram =
+        document.getElementById("instagram-link");
 
-        padding: 0;
-    }
+    const facebook =
+        document.getElementById("facebook-link");
 
-    .nav-whatsapp {
-        display: none;
-    }
+    const youtube =
+        document.getElementById("youtube-link");
 
-    .nav-menu {
-        position: absolute;
-        top: 100%;
-        left: 0;
+    const footerWhatsapp =
+        document.getElementById("footer-whatsapp");
 
-        width: 100%;
+    const navWhatsapp =
+        document.getElementById("nav-whatsapp");
 
-        display: none;
-        flex-direction: column;
 
-        background: rgba(20, 35, 45, 0.98);
-
-        padding: 15px 20px;
-    }
-
-    .nav-menu.active {
-        display: flex;
-    }
-
-    .nav-menu li {
-        width: 100%;
-        text-align: center;
-    }
-
-    .nav-menu a {
-        display: block;
-        padding: 14px;
-        color: #ffffff;
-    }
-
-    /* -----------------------------------------
-       Hero
-    ----------------------------------------- */
-
-    .hero {
-        min-height: 620px;
-
-        background-position: center center;
-    }
-
-    .hero-overlay {
-        background:
-            linear-gradient(
-                180deg,
-                rgba(15, 25, 34, 0.62),
-                rgba(15, 25, 34, 0.91)
-            );
-    }
-
-    .hero-content {
-        width: 90%;
-
-        padding-top: 65px;
-    }
-
-    .hero-content h1 {
-        font-size: clamp(34px, 10vw, 48px);
-
-        line-height: 1.12;
-    }
-
-    .hero-content p {
-        font-size: 13px;
-    }
-
-    .hero-content p:first-of-type {
-        font-size: 10px;
-
-        letter-spacing: 2px;
-    }
-
-    .hero-content a {
-        width: 100%;
-
-        max-width: 250px;
-
-        margin-top: 18px;
-        margin-right: 0;
+    if (instagram) {
+        instagram.href =
+            companyDetails.instagram;
     }
 
 
-    /* -----------------------------------------
-       Sections
-    ----------------------------------------- */
-
-    .section {
-        padding: 65px 0;
-    }
-
-    .container {
-        width: 90%;
-    }
-
-    .about h1,
-    .services h1,
-    .why-us h1,
-    .contact h1 {
-        font-size: 29px;
+    if (facebook) {
+        facebook.href =
+            companyDetails.facebook;
     }
 
 
-    /* -----------------------------------------
-       About
-    ----------------------------------------- */
-
-    .about,
-    .services,
-    .why-us,
-    .contact {
-        padding-top: 70px;
-        padding-bottom: 70px;
-    }
-
-    .about h1,
-    .services h1,
-    .why-us h1,
-    .contact h1 {
-        margin-bottom: 28px;
-
-        font-size: 30px;
-
-        line-height: 1.3;
-    }
-
-    .about h2,
-    .services h2,
-    .why-us h2,
-    .contact h2 {
-        margin-top: 32px;
-        margin-bottom: 12px;
-
-        font-size: 22px;
-    }
-
-    .about p,
-    .services p,
-    .why-us p,
-    .contact p {
-        margin-bottom: 20px;
-
-        font-size: 15px;
-
-        line-height: 1.85;
-    }
-
-    .services ul,
-    .why-us ul {
-        grid-template-columns: 1fr;
-
-        gap: 18px;
-
-        margin-top: 30px;
-    }
-
-    .services li,
-    .why-us li {
-        padding: 24px;
-    }
-
-    .contact h3 {
-        margin-top: 28px;
-        margin-bottom: 8px;
-
-        font-size: 21px;
-    }
-
-    /* -----------------------------------------
-       CTA
-    ----------------------------------------- */
-
-    .cta {
-        padding: 65px 20px;
-    }
-
-    .cta h1,
-    .cta h2 {
-        font-size: 29px;
+    if (youtube) {
+        youtube.href =
+            companyDetails.youtube;
     }
 
 
-    /* -----------------------------------------
-       Contact
-    ----------------------------------------- */
-
-    .contact p {
-        font-size: 13px;
+    if (footerWhatsapp) {
+        footerWhatsapp.href =
+            companyDetails.whatsapp;
     }
 
 
-    /* -----------------------------------------
-       Footer
-    ----------------------------------------- */
-
-    .footer-container {
-        width: 90%;
-
-        padding: 55px 0 40px;
-
-        grid-template-columns: 1fr;
-
-        gap: 35px;
-    }
-
-    .footer-logo img {
-        width: 135px;
-    }
-
-    .footer-about p {
-        max-width: 100%;
-    }
-
-    .footer-bottom {
-        width: 90%;
+    if (navWhatsapp) {
+        navWhatsapp.href =
+            companyDetails.whatsapp;
     }
 
 }
 
 
 /* =========================================================
-   SMALL MOBILE
+   INITIALIZE WEBSITE
 ========================================================= */
 
-@media (max-width: 420px) {
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-    .navbar {
-        width: 90%;
+        loadAllContent();
+
+        setupMobileMenu();
+
+        setCurrentYear();
+
+        setupSocialLinks();
+
     }
-
-    .logo img {
-        width: 110px;
-    }
-
-    .menu-toggle {
-        font-size: 27px;
-    }
-
-    .hero {
-        min-height: 590px;
-    }
-
-    .hero-content h1 {
-        font-size: 32px;
-    }
-
-    .hero-content p {
-        font-size: 12px;
-    }
-
-    .section {
-        padding: 55px 0;
-    }
-
-    .about h1,
-    .services h1,
-    .why-us h1,
-    .contact h1 {
-        font-size: 27px;
-    }
-
-    .services li,
-    .why-us li {
-        padding: 20px 17px;
-    }
-
-}
+);
